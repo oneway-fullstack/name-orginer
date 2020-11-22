@@ -1,8 +1,8 @@
 # name-orginer
 ## Introduction
-a) Get each Google search results count
-b) Save the name and count as csv sorted by count
-c) Try to get name origins (e.g. Greek, Hebrew) from any online source you prefer (for example behindthename.com), and generate a csv of origin with number of occurrences. Sort by number of occurrences.
+1. Get each Google search results count
+2. Save the name and count as csv sorted by count
+3. Try to get name origins (e.g. Greek, Hebrew) from any online source you prefer (for example behindthename.com), and generate a csv of origin with number of occurrences. Sort by number of occurrences.
 
 ## The behindname API Key
 To use the behindthename service, you must get an API (https://www.behindthename.com/api/)
