@@ -20,5 +20,5 @@ pip install
 
 ## run this script
 This script supports two commands.
-1. python run.py -f <filename>
+1. python run.py -f mock.txt
 2. python run.py -s "name1, name2..."
