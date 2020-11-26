@@ -25,12 +25,14 @@ class Parser:
         results = []
 
         print('-----------------------------------------------')
+        session = requests.Session()
+
         for name in names:
             if not name:
                 continue
             print(f"Name: {name}")
-            count = cls.__get_google_search_count_by_name(name.lower())
-            name_origin = cls.__get_origin_by_name(name.lower())
+            count = cls.__get_google_search_count_by_name(name.lower(), session)
+            name_origin = cls.__get_origin_by_name(name.lower(), session)
             result = {
                 "name": name,
                 "count": count,
@@ -70,11 +72,11 @@ class Parser:
         return int(atof(num))
 
     @classmethod
-    def __get_origin_by_name(cls, name, raise_exception: bool = True):
+    def __get_origin_by_name(cls, name, session, raise_exception: bool = True):
         url = cls.BEHIND_THE_NAME_REQ_URL + name + '&key=' + cls.BEHIND_API_KEY + ''
         usage = []
         try:
-            response = requests.get(url)
+            response = session.get(url)
             response.raise_for_status()
             json_response = response.json()
 
@@ -96,11 +98,11 @@ class Parser:
         return usage
 
     @classmethod
-    def __get_google_search_count_by_name(cls, name, raise_exception: bool = True):
+    def __get_google_search_count_by_name(cls, name, session, raise_exception: bool = True):
         url = cls.GOOGLE_BASE_URL + name
 
         try:
-            response = requests.get(url, headers=cls.DEFAULT_HEADER)
+            response = session.get(url, headers=cls.DEFAULT_HEADER)
             search_result = BeautifulSoup(response.content, features="lxml")
 
             if len(search_result.select("#result-stats")) == 0:
