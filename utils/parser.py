@@ -13,6 +13,7 @@ class Parser:
     DEFAULT_HEADER = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0", "Accept-Encoding":"gzip, deflate", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
     BEHIND_THE_NAME_REQ_URL = 'https://www.behindthename.com/api/lookup.json?name='
     BEHIND_API_KEY = 'on615856678'
+    session = requests.Session()
 
     @classmethod
     def run(cls, opt, args):
@@ -25,14 +26,13 @@ class Parser:
         results = []
 
         print('-----------------------------------------------')
-        session = requests.Session()
 
         for name in names:
             if not name:
                 continue
             print(f"Name: {name}")
-            count = cls.__get_google_search_count_by_name(name.lower(), session)
-            name_origin = cls.__get_origin_by_name(name.lower(), session)
+            count = cls.__get_google_search_count_by_name(name.lower())
+            name_origin = cls.__get_origin_by_name(name.lower())
             result = {
                 "name": name,
                 "count": count,
@@ -45,6 +45,7 @@ class Parser:
         print(f"Exporting as the CSV file....")
         cls.__to_csv(sort_result)
         print("Ended!")
+        self.session.close()
 
     @staticmethod
     def __to_csv(data):
@@ -72,11 +73,11 @@ class Parser:
         return int(atof(num))
 
     @classmethod
-    def __get_origin_by_name(cls, name, session, raise_exception: bool = True):
+    def __get_origin_by_name(cls, name, raise_exception: bool = True):
         url = cls.BEHIND_THE_NAME_REQ_URL + name + '&key=' + cls.BEHIND_API_KEY + ''
         usage = []
         try:
-            response = session.get(url)
+            response = cls.session.get(url)
             response.raise_for_status()
             json_response = response.json()
 
@@ -98,11 +99,11 @@ class Parser:
         return usage
 
     @classmethod
-    def __get_google_search_count_by_name(cls, name, session, raise_exception: bool = True):
+    def __get_google_search_count_by_name(cls, name, raise_exception: bool = True):
         url = cls.GOOGLE_BASE_URL + name
 
         try:
-            response = session.get(url, headers=cls.DEFAULT_HEADER)
+            response = cls.session.get(url, headers=cls.DEFAULT_HEADER)
             search_result = BeautifulSoup(response.content, features="lxml")
 
             if len(search_result.select("#result-stats")) == 0:
