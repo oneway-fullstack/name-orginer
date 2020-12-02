@@ -1,4 +1,4 @@
 name,count,origin
-george,1800000000,"English,Romanian"
-donald,871000000,"Scottish,English"
-kenneth,380000000,"Scottish,English,Swedish,Norwegian,Danish"
+donald,0,"Scottish,English"
+george,0,"English,Romanian"
+kenneth,0,"Scottish,English,Swedish,Norwegian,Danish"

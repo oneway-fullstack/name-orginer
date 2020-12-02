@@ -10,7 +10,8 @@ def main(argv):
         sys.exit(2)
 
     opt, arg = options[0]
-    Parser.run(opt, arg)
+    parser = Parser(opt, arg)
+    parser.run()
 
 if __name__ == "__main__":
     main(sys.argv[1:])

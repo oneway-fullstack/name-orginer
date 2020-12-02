@@ -1,10 +1,11 @@
 import os
 import re
 import csv
+import requests
 from typing import List
 from locale import atof, setlocale, LC_NUMERIC
-
-import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 
@@ -13,26 +14,32 @@ class Parser:
     DEFAULT_HEADER = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0", "Accept-Encoding":"gzip, deflate", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
     BEHIND_THE_NAME_REQ_URL = 'https://www.behindthename.com/api/lookup.json?name='
     BEHIND_API_KEY = 'on615856678'
-    session = requests.Session()
 
-    @classmethod
-    def run(cls, opt, args):
+    def __init__(self, opt, args):
+        self.session = requests.Session()
+        retries = Retry(
+            total=10,
+            backoff_factor=0.5,
+            status_forcelist=[ 500, 502, 503, 504 ]
+        )
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
         if opt == '-f':
-            input_names = cls.__read_file(args)
+            input_names = self.__read_file(args)
         else:
             input_names = args
 
-        names = [name.strip() for name in input_names.split(',')]
-        results = []
+        self.names = [name.strip() for name in input_names.split(',')]
 
+    def run(self):
+        results = []
         print('-----------------------------------------------')
 
-        for name in names:
+        for name in self.names:
             if not name:
                 continue
             print(f"Name: {name}")
-            count = cls.__get_google_search_count_by_name(name.lower())
-            name_origin = cls.__get_origin_by_name(name.lower())
+            count = self.__get_google_search_count_by_name(name.lower())
+            name_origin = self.__get_origin_by_name(name.lower())
             result = {
                 "name": name,
                 "count": count,
@@ -43,7 +50,7 @@ class Parser:
 
         sort_result = sorted(results, key = lambda i: i['count'], reverse=True)
         print(f"Exporting as the CSV file....")
-        cls.__to_csv(sort_result)
+        self.__to_csv(sort_result)
         print("Ended!")
         self.session.close()
 
@@ -72,12 +79,11 @@ class Parser:
         setlocale(LC_NUMERIC, '')
         return int(atof(num))
 
-    @classmethod
-    def __get_origin_by_name(cls, name, raise_exception: bool = True):
-        url = cls.BEHIND_THE_NAME_REQ_URL + name + '&key=' + cls.BEHIND_API_KEY + ''
+    def __get_origin_by_name(self, name, raise_exception: bool = True):
+        url = self.BEHIND_THE_NAME_REQ_URL + name + '&key=' + self.BEHIND_API_KEY + ''
         usage = []
         try:
-            response = cls.session.get(url)
+            response = self.session.get(url)
             response.raise_for_status()
             json_response = response.json()
 
@@ -98,12 +104,11 @@ class Parser:
         print(f"Origins: {usage}")
         return usage
 
-    @classmethod
-    def __get_google_search_count_by_name(cls, name, raise_exception: bool = True):
-        url = cls.GOOGLE_BASE_URL + name
+    def __get_google_search_count_by_name(self, name, raise_exception: bool = True):
+        url = self.GOOGLE_BASE_URL + name
 
         try:
-            response = cls.session.get(url, headers=cls.DEFAULT_HEADER)
+            response = self.session.get(url, headers=self.DEFAULT_HEADER)
             search_result = BeautifulSoup(response.content, features="lxml")
 
             if len(search_result.select("#result-stats")) == 0:
@@ -114,7 +119,7 @@ class Parser:
             if not match:
                 return 0
 
-            count = cls.__to_number(match.group())
+            count = self.__to_number(match.group())
         except Exception as e:
             if raise_exception:
                 raise e
